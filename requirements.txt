@@ -1,0 +1,15 @@
+kokoro>=0.9.4,<1.0
+misaki[en,zh]>=0.9.4,<1.0
+# Japanese frontend: Windows wheels avoid a local C++ build of pyopenjtalk.
+pyopenjtalk-plus==0.4.1.post10
+fugashi>=1.4
+jaconv>=0.4
+mojimoji>=0.0.13
+unidic-lite>=1.0.8
+numpy>=1.26
+soundfile>=0.12
+sounddevice>=0.5
+scipy>=1.12
+# Jieba currently imports pkg_resources.
+setuptools>=65,<81
+edge-tts>=7.2,<8

@@ -1,0 +1,42 @@
+# Python environments and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Local scripts, audio, settings, and diagnostics
+studio_data/
+logs/
+backups/
+voice_audit.json
+edge_voice_audit.json
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.voiceloom.json
+
+# Model downloads and credentials
+.cache/
+models/
+*.pt
+*.pth
+*.onnx
+*.safetensors
+.env
+.env.*
+!.env.example
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
