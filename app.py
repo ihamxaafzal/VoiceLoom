@@ -36,9 +36,16 @@ class App:
         self.data = Path(data_dir or BASE / 'studio_data')
         self.data.mkdir(parents=True, exist_ok=True)
         self.root.title('VoiceLoom')
-        self.root.geometry('1320x880')
-        self.root.minsize(1100, 820)
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = max(760, min(1320, screen_width - 40))
+        window_height = max(580, min(880, screen_height - 60))
+        self.root.geometry(f'{window_width}x{window_height}+{max(0, (screen_width - window_width) // 2)}+{max(0, (screen_height - window_height) // 2)}')
+        self.root.minsize(min(1100, window_width), min(820, window_height))
         self.root.configure(bg=BG)
+        self._compact_layout = False
+        self._footer_compact = False
+        self._content_view = 'studio'
         self.events = queue.Queue()
         self.engine = Engine()
         self.ready = False
@@ -60,6 +67,8 @@ class App:
         self._style()
         self._load_branding()
         self._build()
+        self.root.bind('<Configure>', self._on_resize, add='+')
+        self.root.after_idle(self._responsive_layout)
         self._restore()
         self._pick(self.selected['id'])
         self.root.bind('<Control-Return>', lambda e: self._generate())
@@ -128,6 +137,7 @@ class App:
 
     def _build(self):
         header = tk.Frame(self.root, bg=BG)
+        self.header = header
         header.pack(fill='x', padx=24, pady=(18, 14))
         if self.logo_image is not None:
             tk.Label(header, image=self.logo_image, bg=BG, bd=0).pack(
@@ -141,9 +151,13 @@ class App:
         self.button(header, 'Save project', self._save_project).pack(side='right', padx=(6, 0))
         self.button(header, 'Open project', self._open_project).pack(side='right')
         self.label(header, f"{len(VOICES)} voices  /  {sum(v['code'] in ENGLISH_CODES for v in VOICES)} English", 10, ACCENT).pack(side='right', padx=20)
+        self.library_button = self.button(header, 'Voice library →', self._toggle_library)
         body = tk.Frame(self.root, bg=BG)
+        self.body = body
         body.pack(fill='both', expand=True, padx=24)
+        body.pack_propagate(False)
         sidebar = self.panel(body, width=285)
+        self.sidebar = sidebar
         sidebar.pack(side='left', fill='y', padx=(0, 16))
         sidebar.pack_propagate(False)
         self.label(sidebar, 'Voice library', 15, bold=True).pack(anchor='w', padx=16, pady=(16, 2))
@@ -183,7 +197,9 @@ class App:
             var.trace_add('write', lambda *a: self._render())
         self.label(sidebar, 'LOCAL + ONLINE  ·  English collection', 8, MUTED).pack(pady=10)
         right = tk.Frame(body, bg=BG)
+        self.right = right
         right.pack(side='left', fill='both', expand=True)
+        right.pack_propagate(False)
         active = self.panel(right)
         active.pack(fill='x', pady=(0, 12))
         self.avatar = self.label(active, 'H', 23, ACCENT, True, width=3)
@@ -203,6 +219,7 @@ class App:
         self.favorite_btn.pack(side='right', padx=(4, 14))
         self.preview_btn = self.button(active, '▷ Preview', lambda: self._generate(True))
         self.preview_btn.pack(side='right')
+        self._player(right)
         self.notebook = ttk.Notebook(right, height=380)
         self.notebook.pack(fill='both', expand=True)
         self.editor_tab = tk.Frame(self.notebook, bg=PANEL)
@@ -211,13 +228,14 @@ class App:
         self.notebook.add(history_tab, text='Recent renders')
         self._editor(self.editor_tab)
         self._history_ui(history_tab)
-        self._player(right)
         footer = tk.Frame(self.root, bg=BG)
+        self.footer = footer
         footer.pack(fill='x', padx=24, pady=10)
         self.status = self.label(footer, '● Loading speech engine…', 9, MUTED)
         self.status.pack(side='left')
         self.retry_btn = self.button(footer, 'Retry engine', self._load)
-        self.label(footer, 'Ctrl+Enter  Generate     Ctrl+S  Save project', 9, MUTED).pack(side='right')
+        self.shortcuts_label = self.label(footer, 'Ctrl+Enter  Generate     Ctrl+S  Save project', 9, MUTED)
+        self.shortcuts_label.pack(side='right')
         self.branding = tk.Frame(footer, bg=BG)
         self.branding.pack(side='right', padx=24)
         self.label(self.branding, 'Made with', 9, ACCENT).pack(side='left')
@@ -232,7 +250,71 @@ class App:
             font=('Segoe UI', 9), takefocus=True)
         self.github_btn.pack(side='left', padx=(8, 0))
 
+    def _on_resize(self, event):
+        if event.widget is self.root:
+            self._responsive_layout()
+
+    def _responsive_layout(self):
+        if self.closed or not hasattr(self, 'body'):
+            return
+        width = self.root.winfo_width()
+        if width <= 1:
+            return
+        compact = width < 1000
+        footer_compact = width < 880
+        if compact != self._compact_layout:
+            self._compact_layout = compact
+            self.header.pack_configure(padx=12 if compact else 24)
+            self.body.pack_configure(padx=12 if compact else 24)
+            self.footer.pack_configure(padx=12 if compact else 24)
+            self.sidebar.pack_forget()
+            self.right.pack_forget()
+            if compact:
+                self.library_button.pack(side='right', padx=6)
+                if self._content_view == 'library':
+                    self.sidebar.pack(side='left', fill='both', expand=True)
+                else:
+                    self.right.pack(side='left', fill='both', expand=True)
+            else:
+                self.library_button.pack_forget()
+                self._content_view = 'studio'
+                self.sidebar.configure(width=285)
+                self.sidebar.pack(side='left', fill='y', padx=(0, 16))
+                self.right.pack(side='left', fill='both', expand=True)
+        if footer_compact != self._footer_compact:
+            self._footer_compact = footer_compact
+            if footer_compact:
+                self.branding.pack_forget()
+                self.shortcuts_label.pack_forget()
+            else:
+                self.shortcuts_label.pack(side='right')
+                self.branding.pack(side='right', padx=24)
+
+    def _toggle_library(self):
+        if not self._compact_layout:
+            return
+        self._content_view = 'library' if self._content_view == 'studio' else 'studio'
+        self.library_button.configure(text='Studio →' if self._content_view == 'library' else 'Voice library →')
+        self.right.pack_forget()
+        self.sidebar.pack_forget()
+        if self._content_view == 'library':
+            self.sidebar.configure(width=285)
+            self.sidebar.pack(side='left', fill='both', expand=True)
+        else:
+            self.sidebar.configure(width=285)
+            self.right.pack(side='left', fill='both', expand=True)
+
     def _editor(self, p):
+        self.editor_canvas = tk.Canvas(p, bg=PANEL, highlightthickness=0)
+        editor_scroll = ttk.Scrollbar(p, orient='vertical', command=self.editor_canvas.yview)
+        self.editor_canvas.configure(yscrollcommand=editor_scroll.set)
+        editor_scroll.pack(side='right', fill='y')
+        self.editor_canvas.pack(side='left', fill='both', expand=True)
+        editor_content = tk.Frame(self.editor_canvas, bg=PANEL)
+        self.editor_window = self.editor_canvas.create_window((0, 0), window=editor_content, anchor='nw')
+        editor_content.bind('<Configure>', lambda e: self.editor_canvas.configure(scrollregion=self.editor_canvas.bbox('all')))
+        self.editor_canvas.bind('<Configure>', lambda e: self.editor_canvas.itemconfigure(self.editor_window, width=e.width))
+        p = editor_content
         p.columnconfigure(0, weight=1)
         p.rowconfigure(1, weight=1)
         toolbar = tk.Frame(p, bg=PANEL)
@@ -352,6 +434,9 @@ class App:
             if w == self.voice_frame or w == self.canvas:
                 self.canvas.yview_scroll(-int(e.delta/120), 'units')
                 return 'break'
+            if w == getattr(self, 'editor_canvas', None):
+                self.editor_canvas.yview_scroll(-int(e.delta/120), 'units')
+                return 'break'
             w = getattr(w, 'master', None)
 
     def _render(self, reset=True):
@@ -414,6 +499,8 @@ class App:
             self.blend.set('None')
         self._render(False)
         self._controls()
+        if self._compact_layout and self._content_view == 'library':
+            self._toggle_library()
 
     def _restore_voice_notes(self):
         path = self.data / 'voice_notes.json'
