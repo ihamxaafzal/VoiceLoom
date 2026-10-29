@@ -1,5 +1,6 @@
 """Lazy model loading and audio processing; independent of Tk widgets."""
 import math
+import os
 import asyncio
 import io
 import re
@@ -39,6 +40,18 @@ class Engine:
     def load(self):
         import torch
         from kokoro import KPipeline
+        model_dir = os.environ.get('VOICELOOM_MODEL_DIR')
+        if model_dir:
+            from kokoro import KModel
+            folder = Path(model_dir)
+            model = KModel(repo_id='hexgrad/Kokoro-82M',
+                           config=str(folder / 'config.json'),
+                           model=str(folder / 'kokoro-v1_0.pth')).to('cpu').eval()
+            self.pipelines['a'] = KPipeline(lang_code='a', repo_id='hexgrad/Kokoro-82M',
+                                            model=model, device='cpu')
+            self.pipelines['a'].voices.update({p.stem: torch.load(p, map_location='cpu', weights_only=True)
+                                               for p in (folder / 'voices').glob('*.pt')})
+            return
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.device_label = torch.cuda.get_device_name(0) if self.device == 'cuda' else 'CPU'
         try:
@@ -54,6 +67,8 @@ class Engine:
         if code not in self.pipelines:
             from kokoro import KPipeline
             self.pipelines[code] = KPipeline(lang_code=code, repo_id='hexgrad/Kokoro-82M', model=self.pipelines['a'].model)
+            if os.environ.get('VOICELOOM_MODEL_DIR'):
+                self.pipelines[code].voices.update(self.pipelines['a'].voices)
         return self.pipelines[code]
 
     def edge_parts(self, text, voice, settings, cancel, progress):

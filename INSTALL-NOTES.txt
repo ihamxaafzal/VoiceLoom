@@ -1,0 +1,17 @@
+VoiceLoom 1.0.0 - Windows x64
+
+Windows 10/11 64-bit. Recommended: at least 8 GB RAM and 4 GB free disk space.
+Python, speech libraries, Kokoro model, 54 local voice files, English language
+model, pronunciation data and FFmpeg are included. No Python installation,
+pip commands, NVIDIA GPU or administrator account is needed.
+
+Local voices run on your CPU. Online Edge voices always need internet and
+send your script to the speech service. The first local model load may take
+a little time. No model download is needed for the bundled local voices.
+
+Recordings, settings and logs are saved under:
+%LOCALAPPDATA%\VoiceLoom
+They are kept when you uninstall or upgrade the application.
+
+Start VoiceLoom using the Start menu or optional desktop shortcut.
+Uninstall from Windows Settings > Apps > VoiceLoom.
