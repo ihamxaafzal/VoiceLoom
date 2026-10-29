@@ -1,0 +1,10 @@
+VoiceLoom
+Copyright 2026 M Hamza Afzal and VoiceLoom contributors.
+
+Original VoiceLoom contributions are licensed under the Apache License,
+Version 2.0. See LICENSE. Third-party code, model weights, voice assets,
+language data, and tools retain their own licenses and copyright notices.
+
+See THIRD_PARTY_NOTICES.md, FFMPEG-SOURCE.md, and the upstream license
+files supplied with the Windows distribution. No ownership of third-party
+voices or endorsement by their providers is claimed.

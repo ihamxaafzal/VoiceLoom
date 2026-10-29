@@ -47,6 +47,12 @@ def build(args):
     shutil.copy2(args.ffmpeg, app / 'bin' / 'ffmpeg.exe')
     licenses = stage / 'ThirdPartyNotices'
     licenses.mkdir(exist_ok=True)
+    for name in ('LICENSE', 'NOTICE', 'THIRD_PARTY_NOTICES.md', 'FFMPEG-SOURCE.md'):
+        document = source / name
+        if not document.is_file():
+            raise FileNotFoundError(f'Required release notice is missing: {document}')
+        shutil.copy2(document, stage / name)
+        shutil.copy2(document, licenses / name)
     shutil.copy2(python_home / 'LICENSE.txt', licenses / 'Python-LICENSE.txt')
     inventory = sorted([{'name': d.metadata['Name'], 'version': d.version,
                          'license': d.metadata.get('License-Expression') or d.metadata.get('License', ''),

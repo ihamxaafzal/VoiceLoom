@@ -133,6 +133,14 @@ The regression suite uses a synthetic pipeline and mocked online requests. The p
 
 [BUILD-WINDOWS.md](BUILD-WINDOWS.md) explains the private-runtime packaging process. [CHANGELOG.md](CHANGELOG.md) records release changes. Large executable installers and model binaries are distributed through **GitHub Releases**, keeping the source repository lightweight.
 
+## License and third-party components
+
+Original VoiceLoom code and documentation are licensed under **Apache-2.0**; see [LICENSE](LICENSE) and [NOTICE](NOTICE). This license does not relicense third-party models, voices, libraries, native binaries, or online services.
+
+The Windows package contains components with their own Apache, BSD, PSF, GPL, LGPL, MIT, and other terms. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [FFMPEG-SOURCE.md](FFMPEG-SOURCE.md). Download the accompanying [license and attribution archive](https://github.com/ihamxaafzal/VoiceLoom/releases/download/v1.0.0/VoiceLoom-1.0.0-Licenses.zip) and [FFmpeg core source snapshot](https://github.com/ihamxaafzal/VoiceLoom/releases/download/v1.0.0/FFmpeg-239f2c733d-core-source.zip) from Releases. The core snapshot is not a complete corresponding-source bundle for FFmpeg's statically linked external libraries; that source coverage has not been fully audited.
+
+VoiceLoom does not claim ownership of third-party voices or endorsement by their providers. Online-service terms remain separate from the source-code licenses.
+
 ## Acknowledgments
 
 VoiceLoom uses [Kokoro](https://github.com/hexgrad/kokoro), the [Kokoro-82M model](https://huggingface.co/hexgrad/Kokoro-82M), [Misaki](https://github.com/hexgrad/misaki), [edge-tts](https://github.com/rany2/edge-tts), PyTorch, FFmpeg, and other open-source libraries. Upstream components and model assets retain their respective licenses and service terms. The installer includes third-party notices and a package inventory.
